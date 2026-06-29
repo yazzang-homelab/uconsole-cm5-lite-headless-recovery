@@ -1,0 +1,13 @@
+# Build output / EEPROM artifacts (rebuild with scripts/build-eeprom.sh)
+out/
+*.upd
+recovery.bin
+RECOVERY.*
+
+# Never commit secrets
+*.nmconnection
+wpa_supplicant.conf
+*_secret*
+id_rsa
+id_ed25519
+*.pem

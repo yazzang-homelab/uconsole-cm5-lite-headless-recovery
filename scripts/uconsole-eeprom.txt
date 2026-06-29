@@ -1,0 +1,16 @@
+[all]
+BOOT_UART=1
+
+# Switch off PMIC outputs on HALT
+POWER_OFF_ON_HALT=1
+
+# Default BOOT_ORDER for provisioning
+# SD -> NVMe -> USB -> Network
+BOOT_ORDER=0xf461
+
+# Try boot on SDCard repeatedly
+SD_BOOT_MAX_RETRIES=2
+
+# Slow down SDCard SDR Mode in the bootloader
+# (this is the key workaround for the CM5 Lite SD-detection bug)
+SD_QUIRKS=1

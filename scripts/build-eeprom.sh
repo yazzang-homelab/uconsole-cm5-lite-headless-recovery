@@ -46,6 +46,13 @@ echo ">> Applying config ($(basename "$CONFIG")) ..."
 "$WORK/rpi-eeprom/rpi-eeprom-config" --config "$CONFIG" --out "$OUT_DIR/pieeprom.upd" "$SRC"
 cp "$REC" "$OUT_DIR/recovery.bin"
 
+# Generate pieeprom.sig (SHA-256 digest of pieeprom.upd). Recent recovery.bin
+# builds verify the EEPROM image against this signature and will REFUSE to
+# flash if pieeprom.sig is absent — so all THREE files must land on the boot
+# partition (recovery.bin + pieeprom.upd + pieeprom.sig).
+echo ">> Generating pieeprom.sig ..."
+"$WORK/rpi-eeprom/rpi-eeprom-digest" -i "$OUT_DIR/pieeprom.upd" -o "$OUT_DIR/pieeprom.sig"
+
 echo ">> Verifying baked-in config:"
 "$WORK/rpi-eeprom/rpi-eeprom-config" "$OUT_DIR/pieeprom.upd" | grep -vE '^\s*#|^\s*$' | sed 's/^/     /'
 
@@ -53,8 +60,13 @@ cat <<EOF
 
 Done. Files written to: $OUT_DIR
   - recovery.bin   (BootROM EEPROM-flash trigger)
-  - pieeprom.upd   (new EEPROM image with SD_QUIRKS=1 / BOOT_ORDER=0xf461)
+  - pieeprom.upd   (new EEPROM image)
+  - pieeprom.sig   (SHA-256 digest — recovery.bin refuses to flash without it)
 
-Next: copy BOTH files onto the FAT boot partition of the uConsole SD card
+Next: copy ALL THREE files onto the FAT boot partition of the uConsole SD card
 (inject-headless.sh does this for you), then boot the uConsole once.
+
+NOTE: flashing the *latest* firmware is the permanent fix for the CM5 Lite
+cold-boot SD-detection bug. SD_QUIRKS=1 is only a workaround for old firmware
+and can let the failure recur after a reboot. See docs/FIRMWARE-UPDATE.md.
 EOF

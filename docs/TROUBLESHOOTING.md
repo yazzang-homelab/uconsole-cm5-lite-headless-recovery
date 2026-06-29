@@ -79,6 +79,33 @@ Two independent confirmations:
 1. On the SD (host): `recovery.bin` has been renamed to `RECOVERY.000` → the BootROM consumed it.
 2. Over SSH (booted): `vcgencmd version` prints a bootloader date **≥ 2025-01-06** (ideally a 2025/2026 date).
 
+## "It booted fine, then a reboot brought back the black screen / no network"
+
+The cold-boot SD-detection failure **came back after a reboot.** This means you
+only ever had the **workaround** (`SD_QUIRKS=1` on old firmware), not a fixed
+bootloader. `SD_QUIRKS` slows the SD card to dodge the init-timing bug, but the
+bug is still in the firmware and can resurface on any cold boot.
+
+Tell-tale on the host (mount the SD on another Linux box):
+
+- Both filesystems `fsck` **clean**, `cmdline.txt` intact, no `init=…firstboot` →
+  the SD is fine; this is **not** filesystem corruption.
+- `vcgencmd bootloader_version` (when it last booted) shows a date only *just*
+  past 2025-01-06, not a recent one.
+
+**Fix: update to the latest bootloader firmware** — see
+[FIRMWARE-UPDATE.md](FIRMWARE-UPDATE.md). Recent `firmware-2712` releases fix SD
+detection properly, after which `SD_QUIRKS` is no longer load-bearing and
+reboots stop reintroducing the failure. Do it from the OS with
+`sudo rpi-eeprom-update -a` while the device is reachable, or offline via
+`recovery.bin` if it's already stranded.
+
+> Remember the two-power-cycle behaviour: the offline `recovery.bin` flash boot
+> often **halts at a green screen** after writing the EEPROM. `RECOVERY.000` on
+> the boot partition proves it flashed; **power-cycle once more** to actually
+> boot the OS. (If the rootfs has no new logs after the flash timestamp, the OS
+> simply hasn't booted yet — not a failure.)
+
 ## Power supply
 
 The CM5 has higher peak current draw than the CM4. If you see boot loops or brownouts, ensure charged 18650 cells and/or a strong USB-C PD source (20 W+). Underpowering can look like a boot failure.

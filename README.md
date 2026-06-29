@@ -12,7 +12,7 @@ A uConsole CM5 Lite that shows only a power LED and a black screen, and that **n
 
 | # | Root cause | Fix |
 |---|-----------|-----|
-| **A** | CM5 Lite **bootloader EEPROM fails to detect the SD card** on cold boot (firmware older than 2025-01-06; missing `SD_QUIRKS` / SD-first `BOOT_ORDER`). | Flash an updated EEPROM via `recovery.bin` + a config containing `SD_QUIRKS=1`, `BOOT_ORDER=0xf461`, `SD_BOOT_MAX_RETRIES=2`. |
+| **A** | CM5 Lite **bootloader EEPROM fails to detect the SD card** on cold boot (firmware older than 2025-01-06; missing `SD_QUIRKS` / SD-first `BOOT_ORDER`). | Flash an updated EEPROM via `recovery.bin` + a config containing `SD_QUIRKS=1`, `BOOT_ORDER=0xf461`, `SD_BOOT_MAX_RETRIES=2`. **`SD_QUIRKS` is a workaround — for a fix that survives reboots, flash the *latest* firmware: see [FIRMWARE-UPDATE](docs/FIRMWARE-UPDATE.md).** |
 | **B** | A **generic Raspberry Pi OS image** was flashed, which has none of the uConsole drivers (panel, keyboard, Wi-Fi device tree). | Flash a **uConsole-specific image** (one that ships `dtoverlay=clockworkpi-uconsole-cm5`). |
 | **C** | The image's **`init=…/raspberrypi-sys-mods/firstboot` hook hangs forever** when there is no working console, so `systemd`, networking and SSH never start. | **Remove the `init=…firstboot` token from `cmdline.txt`** and let it boot straight into `systemd`. |
 

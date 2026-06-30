@@ -81,24 +81,31 @@ Two independent confirmations:
 
 ## "It booted fine, then a reboot brought back the black screen / no network"
 
-The cold-boot SD-detection failure **came back after a reboot.** This means you
-only ever had the **workaround** (`SD_QUIRKS=1` on old firmware), not a fixed
-bootloader. `SD_QUIRKS` slows the SD card to dodge the init-timing bug, but the
-bug is still in the firmware and can resurface on any cold boot.
+The cold-boot SD-detection failure **came back after a reboot.** On this CM5 Lite
+that almost always means the live EEPROM config is **missing `SD_QUIRKS=1`** —
+either it was never flashed, or it got dropped by a firmware update (a plain
+`sudo rpi-eeprom-update -a` resets the config to the firmware default, which has
+no quirk). Updating the firmware alone does **not** fix this; see the
+[2026-06-30 postmortem](FIRMWARE-UPDATE.md#why-sd_quirks-must-stay-2026-06-30-postmortem).
 
 Tell-tale on the host (mount the SD on another Linux box):
 
-- Both filesystems `fsck` **clean**, `cmdline.txt` intact, no `init=…firstboot` →
-  the SD is fine; this is **not** filesystem corruption.
-- `vcgencmd bootloader_version` (when it last booted) shows a date only *just*
-  past 2025-01-06, not a recent one.
+- Both filesystems `fsck` **clean**, `cmdline.txt` intact, no `init=…firstboot`,
+  `root=PARTUUID` matches the rootfs, kernel/DTB/overlay all present → **the SD is
+  fine.** This is not filesystem corruption and not an image problem; the OS never
+  started because the bootloader didn't latch the SD.
+- `/var/log/journal` empty (volatile) and the newest persistent files under
+  `/var/log/` are from the *last good* session, not the failed boots → nothing
+  reached the OS, confirming a pre-kernel (bootloader) stall.
 
-**Fix: update to the latest bootloader firmware** — see
-[FIRMWARE-UPDATE.md](FIRMWARE-UPDATE.md). Recent `firmware-2712` releases fix SD
-detection properly, after which `SD_QUIRKS` is no longer load-bearing and
-reboots stop reintroducing the failure. Do it from the OS with
-`sudo rpi-eeprom-update -a` while the device is reachable, or offline via
-`recovery.bin` if it's already stranded.
+**Fix: re-flash an EEPROM image that *includes* `SD_QUIRKS=1`** (plus
+`BOOT_ORDER=0xf461`, `SD_BOOT_MAX_RETRIES=5`). Offline via `recovery.bin` if it's
+stranded (`scripts/build-eeprom.sh` bakes the correct config), or from the OS if
+it's reachable — but if you use `rpi-eeprom-update -a`, **re-apply the quirk
+afterward** with `sudo rpi-eeprom-config --apply scripts/uconsole-eeprom.txt`.
+Confirm with `rpi-eeprom-config | grep SD_QUIRKS`. Updating the firmware is still
+worthwhile, but it is hygiene, not a substitute for the quirk. See
+[FIRMWARE-UPDATE.md](FIRMWARE-UPDATE.md).
 
 > Remember the two-power-cycle behaviour: the offline `recovery.bin` flash boot
 > often **halts at a green screen** after writing the EEPROM. `RECOVERY.000` on

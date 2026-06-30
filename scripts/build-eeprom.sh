@@ -66,7 +66,9 @@ Done. Files written to: $OUT_DIR
 Next: copy ALL THREE files onto the FAT boot partition of the uConsole SD card
 (inject-headless.sh does this for you), then boot the uConsole once.
 
-NOTE: flashing the *latest* firmware is the permanent fix for the CM5 Lite
-cold-boot SD-detection bug. SD_QUIRKS=1 is only a workaround for old firmware
-and can let the failure recur after a reboot. See docs/FIRMWARE-UPDATE.md.
+NOTE: keep SD_QUIRKS=1 in the config (uconsole-eeprom.txt). It is load-bearing
+on this CM5 Lite + SD card *even on the latest firmware* — a 2026/06/17 unit
+regressed to "green LED, black screen" after a reboot once the quirk was dropped,
+and re-adding it on the same firmware fixed it. Updating the firmware is good
+hygiene but is NOT a substitute for the quirk. See docs/FIRMWARE-UPDATE.md.
 EOF

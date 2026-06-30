@@ -8,9 +8,19 @@ POWER_OFF_ON_HALT=1
 # SD -> NVMe -> USB -> Network
 BOOT_ORDER=0xf461
 
-# Try boot on SDCard repeatedly
-SD_BOOT_MAX_RETRIES=2
+# Try boot on SDCard repeatedly (cold-boot insurance — 5 gives the marginal
+# SD interface several attempts before giving up)
+SD_BOOT_MAX_RETRIES=5
 
-# Slow down SDCard SDR Mode in the bootloader
-# (this is the key workaround for the CM5 Lite SD-detection bug)
+# Slow the SD card to SDR mode in the bootloader.
+#
+# DO NOT REMOVE THIS LINE. It is load-bearing on this CM5 Lite + SD-card
+# combination, *regardless of bootloader firmware version*.
+#
+# We originally believed recent firmware (>= 2025-01-06) fixed the SD-detection
+# timing natively, so a later firmware update dropped SD_QUIRKS. It did not hold:
+# on firmware 2026/06/17, a unit booted fine, then a single reboot dropped it
+# straight back into "green LED, black screen, never joins the network." Adding
+# SD_QUIRKS=1 back on the *same* firmware restored reliable cold boot.
+# Conclusion: keep this quirk pinned permanently. See docs/FIRMWARE-UPDATE.md.
 SD_QUIRKS=1
